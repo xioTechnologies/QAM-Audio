@@ -78,8 +78,8 @@ function constellationPoints = demodulator(qamSignal, sampleFrequency, rrcFilter
     % Plot
     figure;
     hold on;
-    plot(rad2deg(carrierPhase));
-    plot(rad2deg(symbolPhase));
+    plot(rad2deg(pilotToneCarrierRatio * carrierPhase));
+    plot(rad2deg(pilotToneSymbolRatio * symbolPhase));
     plot([1, numberOfSamples], [0, 0], 'k');
     ylabel('Phase (degrees)');
     title('Carrier and symbol phase correction');
