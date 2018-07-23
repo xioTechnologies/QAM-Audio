@@ -166,7 +166,7 @@ title('QAM signal');
 % numberOfSamples = length(qamSignal);
 % fftComplex = fft(qamSignal);
 % fftReal = abs(fftComplex / numberOfSamples);
-% fftReal = fftReal(1:((numberOfSamples / 2) + 1)); % exclude reflection
+% fftReal = fftReal(1:round((numberOfSamples / 2) + 1)); % exclude reflection
 % fftReal(2:(end - 1)) = 2 * fftReal(2:(end - 1));
 % fftFrequencies = sampleFrequency * (0:(numberOfSamples / 2)) / numberOfSamples;
 %
