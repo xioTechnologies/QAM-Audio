@@ -29,8 +29,8 @@ function constellationPoints = demodulator(qamSignal, sampleFrequency, rrcFilter
     for index = 2:numberOfSamples
 
         % Create carrier clocks
-        iCarrier = cos(pilotToneCarrierRatio * (pilotToneInverseSin(index) + carrierPhase(index - 1)));
-        qCarrier = -sin(pilotToneCarrierRatio * (pilotToneInverseSin(index) + carrierPhase(index - 1)));
+        iCarrier = cos((pilotToneCarrierRatio * pilotToneInverseSin(index)) + carrierPhase(index - 1));
+        qCarrier = -sin((pilotToneCarrierRatio * pilotToneInverseSin(index)) + carrierPhase(index - 1));
 
         % Split I and Q signals
         iSignal(index) = qamSignal(index) * iCarrier;
@@ -45,10 +45,10 @@ function constellationPoints = demodulator(qamSignal, sampleFrequency, rrcFilter
         % Calculate carrier phase detector
         iCarrierPhaseDetector = iBaseband(index) * sign(qBaseband(index));
         qCarrierPhaseDetector = qBaseband(index) * sign(iBaseband(index));
-        carrierPhaseDetector = qCarrierPhaseDetector - iCarrierPhaseDetector;
+        carrierPhaseDetector = iCarrierPhaseDetector - qCarrierPhaseDetector;
 
         % Update carrier phase
-        carrierPhase(index) = carrierPhase(index - 1) + carrierPhaseCorrectionGain * carrierPhaseDetector * (2 * pi * samplePeriod);
+        carrierPhase(index) = carrierPhase(index - 1) - (carrierPhaseCorrectionGain * carrierPhaseDetector * pilotToneCarrierRatio * (2 * pi * samplePeriod));
 
         % Create symbol clock
         symbolClock(index) = sin(pilotToneSymbolRatio * (pilotToneInverseSin(index) + symbolPhase(index - 1)));
@@ -59,7 +59,7 @@ function constellationPoints = demodulator(qamSignal, sampleFrequency, rrcFilter
         symbolPhaseDetector = iSymbolPhaseDetector + qSymbolPhaseDetector;
 
         % Update symbol phase
-        symbolPhase(index) = symbolPhase(index - 1) - symbolPhaseCorrectionGain * symbolPhaseDetector * (2 * pi * samplePeriod);
+        symbolPhase(index) = symbolPhase(index - 1) - (symbolPhaseCorrectionGain * symbolPhaseDetector * pilotToneSymbolRatio * (2 * pi * samplePeriod));
     end
 
     % Obtain symbol indexes as each symbol clock zero-crossing from negative to positive
@@ -78,8 +78,8 @@ function constellationPoints = demodulator(qamSignal, sampleFrequency, rrcFilter
     % Plot
     figure;
     hold on;
-    plot(rad2deg(pilotToneCarrierRatio * carrierPhase));
-    plot(rad2deg(pilotToneSymbolRatio * symbolPhase));
+    plot(rad2deg(carrierPhase));
+    plot(rad2deg(symbolPhase));
     plot([1, numberOfSamples], [0, 0], 'k');
     ylabel('Phase (degrees)');
     title('Carrier and symbol phase correction');
