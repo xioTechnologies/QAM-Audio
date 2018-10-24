@@ -134,7 +134,7 @@ qamSignal = iSignal + qSignal;
 
 %% Audio loopback
 
-% outputGain = 0.05;
+% outputGain = -0.05; % account for DAC inversion
 % startStopDelay = 0.2; % delay between sound start/stop and record start/stop
 %
 % audiorecorderObject = audiorecorder(sampleFrequency, 24, 1); % 24-bit, single channel
