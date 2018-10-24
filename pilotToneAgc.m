@@ -43,7 +43,7 @@ function output = pilotToneAgc(input, sampleFrequency, pilotToneFrequency)
         % Apply gain
         output(index) = gain(index - 1) * input(index);
 
-        % Low-pass filter output signal
+        % Band-pass filter output signal
         outputLowPassFilter = lowPassFilterCascadeUpdate(outputLowPassFilter, output(index));
         filteredOutput(index) = outputLowPassFilter.outputs(end); % use output of last filter in cascade
         outputHighPassFilter = highPassFilterCascadeUpdate(outputHighPassFilter, filteredOutput(index));
@@ -52,7 +52,7 @@ function output = pilotToneAgc(input, sampleFrequency, pilotToneFrequency)
         if index > pilotToneSamplesPerCycle
 
             % Envelope follower
-            envelope(index) = max(abs(filteredOutput((index - pilotToneSamplesPerCycle):index)));         
+            envelope(index) = max(abs(filteredOutput((index - pilotToneSamplesPerCycle):index)));
 
             % Calculate error
             error(index) = envelope(index) - referencePilotToneAmplitude;
