@@ -5,14 +5,24 @@ close all;
 %% QAM parameters
 
 sampleFrequency = 96000; % Hz
-carrierFrequency = 9600; % Hz (must be divisible by sampleFrequency)
-pilotToneFrequency = 1000; % Hz
+carrierFrequency = 9600; % Hz (must be divisible by sample frequency)
+pilotToneFrequency = 960; % Hz
 carrierCyclesPerSymbol = 2.0; % increasing this value will increases spectral efficiency
 bitsPerSymbol = 2; % must be an even number
-symbolsPerRrcFilter = 5; % number of symbols
+symbolsPerRrcFilter = 5; % FIR filter length
 beta = 1.0; % 0 = best spectral efficiency but requires infinite filter length, 1 = poor spectral efficiency but best ISI for finite filter length
-oversampling = 1; % multiplier (1 = no oversampling)
+oversamplingRatio = 1; % 1 = no oversampling
 constellationRepetitions = 5;
+
+if mod(sampleFrequency, carrierFrequency) ~= 0
+    error('Carrier frequency must be divisible by sample frequency.');
+end
+if mod(carrierFrequency, pilotToneFrequency) ~= 0
+    warning('Pilot tone frequency is not divisible by carrier frequency.  Carrier phase correction may take longer than necessary.');
+end
+if mod(carrierFrequency / carrierCyclesPerSymbol, pilotToneFrequency) ~= 0
+    warning('Symbol frequency is not divisible by pilot tone frequency.  Symbol phase correction may take longer than necessary.');
+end
 
 fprintf('Bit rate:   %0.0f bps\n', bitsPerSymbol * (carrierFrequency / carrierCyclesPerSymbol));
 fprintf('Latency:    %0.2f ms\n', 1000 * symbolsPerRrcFilter * carrierCyclesPerSymbol * (1 / carrierFrequency));
@@ -68,6 +78,9 @@ qSequence = [];
 for constellationCount = 1:(1 + constellationRepetitions)
     for iSequenceIndex = 1:length(amplitudes)
         for qSequenceIndex = 1:length(amplitudes)
+%             if amplitudes(iSequenceIndex) == max(amplitudes) && amplitudes(qSequenceIndex) == max(amplitudes)
+%                 continue; % omit top right constellation point
+%             end
             iSequence = [iSequence, amplitudes(iSequenceIndex)];
             qSequence = [qSequence, amplitudes(qSequenceIndex)];
         end
@@ -197,12 +210,12 @@ title('QAM signal');
 
 %% Oversampling
 
-oversampledSampleFrequency = oversampling * sampleFrequency;
-oversampledTime = linspace(time(1), time(end), oversampling * length(time));
+oversampledSampleFrequency = oversamplingRatio * sampleFrequency;
+oversampledTime = linspace(time(1), time(end), oversamplingRatio * length(time));
 oversampledQamSignal = interp1(time, qamSignal, oversampledTime, 'linear');
-oversampledSamplesPerFilter = oversampling * samplesPerRrcFilter;
-oversampledSamplesPerSymbol = oversampling * samplesPerSymbol;
-oversampledFilterImpulseResponse = interp1(1:samplesPerRrcFilter, rrcFilterImpulseResponse, linspace(1, samplesPerRrcFilter, oversampling * samplesPerRrcFilter), 'linear');
+oversampledSamplesPerFilter = oversamplingRatio * samplesPerRrcFilter;
+oversampledSamplesPerSymbol = oversamplingRatio * samplesPerSymbol;
+oversampledFilterImpulseResponse = interp1(1:samplesPerRrcFilter, rrcFilterImpulseResponse, linspace(1, samplesPerRrcFilter, oversamplingRatio * samplesPerRrcFilter), 'linear');
 % oversampledPilotToneInverseSin = interp1(time, pilotToneInverseSin, oversampledTime, 'linear');
 
 %% Demodulation
@@ -231,7 +244,7 @@ oversampledFilterImpulseResponse = interp1(1:samplesPerRrcFilter, rrcFilterImpul
 % set(gca, 'Yticklabel', [])
 % set(gca, 'Xticklabel', []);
 
-%% Cheat demodulation
+%% Cheat demodulation (not compatible with audio loopback)
 
 recoveredICarrier = cos(2 * pi * carrierFrequency * oversampledTime);
 recoveredQCarrier = -sin(2 * pi * carrierFrequency * oversampledTime);
